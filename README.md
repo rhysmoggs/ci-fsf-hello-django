@@ -822,3 +822,75 @@ this case since they've already been made. But we can run them as usual with
 `python3 manage.py migrate` Even though our code hasn't even been deployed.
 The fact that we're now able to run these migrations on the remote database
 means that everything is set up correctly so far."
+
+push to github by:
+`git remote -v` to check. we want to push to origin, not heroku
+
+create ".gitignore" file in root, if it's not already there (with CI template, it should)
+add `*.sqlite3` to add all files with an sqlite3 extension and `__pycache__/` to ".gitignore"
+
+ready to push: 
+git add . (to add all)
+git commit -m "prepared to deploy to heroku"
+git push origin main
+
+next, deploy to heroku:
+git push heroku main
+I had an error first time, so type this in CLi, if related
+`heroku config:set DISABLE_COLLECTSTATIC=1` OR
+`heroku config:set DISABLE_COLLECTSTATIC=1 --app ckz8790-django-todo-app`
+(replace ckz...etc with your app name)
+I suppose the same can be done in Config Vars through heroku.
+
+try opening app through heroku (Open App button on top-right). itll failt.
+`heroku logs --tail` back in gitpod cli. list fo errors, handy for future use. can search google e.g "heroku error code h14"
+
+create Procfile in root. type: `web: gunicorn django_todo.wsgi:application` in it
+
+git add Prcfile
+git commit -m "Added Procfile"
+git push heroku main
+
+open app through heroku again. it'll load, but with an error.
+
+read the error, then in settings.py, add it to look like:
+
+`ALLOWED_HOSTS = ['ckz8790-django-todo-app.herokuapp.com']`
+
+git add django_todo/settings.py (or git add .)
+git commit -m "fixed allowed hosts"
+git push heroku main
+
+then, push to own repo:
+git push origin main
+
+open app in heroku again, and test. should work fine.
+
+
+Connecting Heroku to Github (automated deployment unavaiable atm due to heroku security issues)
+add `import os` to the top settings.py file, with the other imports (no need on older versions, already there)
+and the secret_key section to be:
+
+`SECRET_KEY = os.environ.get('SECRET_KEY', 'your_default_value_here')`
+where your_default_value_here is the one in settings.py already. some jumbled code.
+and...update ALLOWED_HOSTS to be:
+`ALLOWED_HOSTS = [os.environ.get('HEROKU_HOSTNAME')]`
+
+and...update DATABASES to be:
+```
+DATABASES = {
+    'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
+}
+```
+
+go to heroku, and add the environment variable in the config vars:
+```
+HEROKU_HOSTNAME: ckz8790-django-todo-app.herokuapp.com (your app address without the http:// and / at the end)
+```
+
+go to "todo_list.html" and change title at top to Todo List instead of app. Do the same to "edit_item.html" but
+Edit Item as title, and Add Item in "add_item.html".
+
+git add .
+git commit -m "Set up environment variables and deployment"
+git push origin main
